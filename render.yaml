@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: cotton-leaf-disease
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
