@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotton Leaf Disease Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Cotton Leaf Disease Detection</h1>
+
+    {% if error %}
+    <div class="error">
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <div class="upload-container">
+
+            <input
+                type="file"
+                name="file"
+                id="file"
+                accept="image/*"
+                required
+            >
+
+            <label for="file" class="upload-btn">
+                Choose an Image
+            </label>
+
+            <button type="submit" class="analyze-btn">
+                Analyze Leaf
+            </button>
+
+        </div>
+
+        <!-- Image Preview -->
+        <div id="preview-container" style="display:none; margin-top:30px; text-align:center;">
+
+            <h2>Selected Image</h2>
+
+            <img
+                id="preview-image"
+                src=""
+                alt="Preview"
+                style="max-width:400px;
+                       width:100%;
+                       border-radius:10px;
+                       box-shadow:0 4px 10px rgba(0,0,0,.2);"
+            >
+
+            <p id="filename"
+               style="margin-top:10px;
+                      font-weight:bold;">
+            </p>
+
+        </div>
+
+    </form>
+
+    {% if results %}
+
+    <div class="results-container">
+
+        <h2>Analysis Results</h2>
+
+        <div class="result-card">
+
+            <div class="status {{ 'diseased' if results.status == 'DISEASED' else 'healthy' }}">
+                {{ results.status }}
+            </div>
+
+            <div class="metrics">
+
+                <p>
+                    <strong>Healthy Area:</strong><br>
+                    {{ results.healthy_percentage }}
+                </p>
+
+                <p>
+                    <strong>Damaged Area:</strong><br>
+                    {{ results.damaged_percentage }}
+                </p>
+
+                <p>
+                    <strong>Damage Spots:</strong><br>
+                    {{ results.damage_spots }}
+                </p>
+
+            </div>
+
+            {% if results.disease_reasons %}
+
+            <div class="reasons">
+
+                <h3>Disease Indicators</h3>
+
+                <ul>
+
+                    {% for reason in results.disease_reasons %}
+                    <li>{{ reason }}</li>
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+        <div class="images">
+
+            <div class="image-container">
+
+                <h3>Original Image</h3>
+
+                <img
+                    src="{{ url_for('static', filename=original_image) }}"
+                    alt="Original Image"
+                >
+
+            </div>
+
+            <div class="image-container">
+
+                <h3>Analysis Result</h3>
+
+                <img
+                    src="{{ url_for('static', filename=results.result_image) }}"
+                    alt="Analysis Result"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+
+const fileInput = document.getElementById("file");
+const previewContainer = document.getElementById("preview-container");
+const previewImage = document.getElementById("preview-image");
+const filename = document.getElementById("filename");
+
+fileInput.addEventListener("change", function () {
+
+    const file = this.files[0];
+
+    if(file){
+
+        previewImage.src = URL.createObjectURL(file);
+
+        filename.innerHTML = file.name;
+
+        previewContainer.style.display = "block";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

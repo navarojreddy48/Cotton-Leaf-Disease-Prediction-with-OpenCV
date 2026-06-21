@@ -2,11 +2,13 @@ import os
 import cv2
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
 # Configure upload folder
 UPLOAD_FOLDER = 'static/uploads'
+print("OpenCV Version:", cv2.__version__)
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -40,7 +42,8 @@ def analyze_cotton_leaf(image_path):
         
     leaf_contour = max(contours, key=cv2.contourArea)
     leaf_area = cv2.contourArea(leaf_contour)
-    
+    if leaf_area <= 0:
+        return None, "Invalid leaf area detected"
     if leaf_area < 500:  # Minimum leaf area threshold
         return None, "Error: Leaf too small or not detected"
     
@@ -192,24 +195,46 @@ def index():
         
         if file:
             # Save the uploaded file
-            filename = file.filename
+            filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
+            print("Saved to:", filepath)
+
+            img = cv2.imread(filepath)
+            if img is None:
+                return render_template(
+                    "index.html",
+                    error="OpenCV could not read the uploaded image."
+                )
             
             # Get relative path for original image
             original_image_rel = f"uploads/{filename}"
             
             # Analyze the leaf
-            results, error = analyze_cotton_leaf(filepath)
-            
-            if error:
-                return render_template('index.html', 
-                                      error=error, 
-                                      original_image=original_image_rel)
-            
-            return render_template('index.html', 
-                                  results=results, 
-                                  original_image=original_image_rel)
+            try:
+                results, error = analyze_cotton_leaf(filepath)
+
+                if error:
+                    return render_template(
+                        "index.html",
+                        error=error,
+                        original_image=original_image_rel
+                    )
+
+                return render_template(
+                    "index.html",
+                    results=results,
+                    original_image=original_image_rel
+                )
+
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+
+                return render_template(
+                    "index.html",
+                    error=f"Server Error: {str(e)}"
+                )
 
     return render_template('index.html')
 
